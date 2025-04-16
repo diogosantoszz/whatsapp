@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Scheduler</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <div class="container">
+        <header>
+
+                <div class="header-top">
+        <h1>WhatsApp Scheduler</h1>
+        <button onclick="logout()" class="btn-logout" title="Sair do sistema">
+            <span class="logout-icon">🚪</span>
+            <span class="logout-text">Sair</span>
+        </button>
+    		</div>            
+            <div class="connection-status status-disconnected" id="connectionStatus">
+                Não conectado ao WhatsApp
+            </div>
+            
+            <div class="qr-container" id="qrContainer" style="display: none;">
+                <p>Escaneie o código QR com seu WhatsApp para conectar:</p>
+                <div class="qr-code" id="qrCode">
+                    <img id="qrCodeImage" src="" alt="QR Code">
+                </div>
+            </div>
+            
+            <button id="connectBtn" class="btn-primary">Conectar ao WhatsApp</button>
+<button id="restartWhatsAppBtn" class="btn-warning" style="margin-top: 10px;">
+  Reiniciar Serviço WhatsApp
+</button>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="schedule">Agendar Mensagens</button>
+            <button class="tab-btn" data-tab="contacts">Gestão de Contatos</button>
+            <button class="tab-btn" data-tab="templates">Templates de Mensagens</button>
+            <button class="tab-btn" data-tab="messages">Mensagens Agendadas</button>
+        </div>
+        
+        <!-- Aba de Agendamento -->
+        <div class="tab-content active" id="schedule-tab">
+            <h2>Agendar Nova Mensagem</h2>
+            <div class="form-group">
+                <label for="recipient-select">Destinatário:</label>
+                <div class="input-group">
+                    <select id="recipient-select" class="flex-grow">
+                        <option value="">-- Selecionar contato --</option>
+                    </select>
+                    <button id="manualRecipientBtn" class="btn-small">Inserir manualmente</button>
+                </div>
+                <div id="manual-recipient" style="display: none;" class="mt-2">
+                    <input type="text" id="recipient" placeholder="Número de telefone (ex: 912345678)">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="template-select">Mensagem:</label>
+                <div class="input-group">
+                    <select id="template-select" class="flex-grow">
+                        <option value="">-- Selecionar template --</option>
+                    </select>
+                    <button id="customMessageBtn" class="btn-small">Mensagem personalizada</button>
+                </div>
+                <div class="mt-2">
+                    <textarea id="message" placeholder="Digite sua mensagem aqui..."></textarea>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="scheduledDate">Data de Envio:</label>
+                <input type="date" id="scheduledDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="scheduledTime">Hora de Envio:</label>
+                <input type="time" id="scheduledTime">
+            </div>
+            
+            <button id="scheduleBtn" class="btn-primary">Agendar Mensagem</button>
+        </div>
+        
+        <!-- Aba de Gestão de Contatos -->
+        <div class="tab-content" id="contacts-tab">
+            <div class="header-actions">
+                <h2>Gestão de Contatos</h2>
+                <button id="newContactBtn" class="btn-secondary">Novo Contato</button>
+            </div>
+            
+            <div id="contact-form" class="form-panel" style="display: none;">
+                <h3 id="contact-form-title">Adicionar Contato</h3>
+                <input type="hidden" id="contact-id">
+                
+                <div class="form-group">
+                    <label for="contact-name">Nome:</label>
+                    <input type="text" id="contact-name" placeholder="Nome do contato">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-number">Número de Telefone:</label>
+                    <input type="text" id="contact-number" placeholder="Número de telefone (ex: 912345678)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-category">Categoria:</label>
+                    <input type="text" id="contact-category" placeholder="Categoria (opcional)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-description">Descrição:</label>
+                    <textarea id="contact-description" placeholder="Descrição (opcional)"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button id="saveContactBtn" class="btn-primary">Salvar</button>
+                    <button id="cancelContactBtn" class="btn-secondary">Cancelar</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="contacts-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Número</th>
+                            <th>Categoria</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contactsList">
+                        <tr>
+                            <td colspan="4" class="center">Carregando contatos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Aba de Templates de Mensagens -->
+        <div class="tab-content" id="templates-tab">
+            <div class="header-actions">
+                <h2>Templates de Mensagens</h2>
+                <button id="newTemplateBtn" class="btn-secondary">Novo Template</button>
+            </div>
+            
+            <div id="template-form" class="form-panel" style="display: none;">
+                <h3 id="template-form-title">Adicionar Template</h3>
+                <input type="hidden" id="template-id">
+                
+                <div class="form-group">
+                    <label for="template-title">Título:</label>
+                    <input type="text" id="template-title" placeholder="Título do template">
+                </div>
+                
+                <div class="form-group">
+                    <label for="template-content">Conteúdo:</label>
+                    <textarea id="template-content" placeholder="Conteúdo da mensagem"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="template-category">Categoria:</label>
+                    <input type="text" id="template-category" placeholder="Categoria (opcional)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="template-tags">Tags (separadas por vírgula):</label>
+                    <input type="text" id="template-tags" placeholder="Ex: urgente, lembrete, comercial">
+                </div>
+                
+                <div class="form-actions">
+                    <button id="saveTemplateBtn" class="btn-primary">Salvar</button>
+                    <button id="cancelTemplateBtn" class="btn-secondary">Cancelar</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="templates-table">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Categoria</th>
+                            <th>Visualizar</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="templatesList">
+                        <tr>
+                            <td colspan="4" class="center">Carregando templates...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Aba de Mensagens Agendadas -->
+        <div class="tab-content" id="messages-tab">
+            <h2>Mensagens Agendadas</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Destinatário</th>
+                            <th>Mensagem</th>
+                            <th>Data/Hora</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduledMessagesList">
+                        <tr id="no-messages-row">
+                            <td colspan="5" class="center">Carregando mensagens...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Modal para visualizar template -->
+        <div id="template-preview-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="preview-title"></h3>
+                <div id="preview-content" class="preview-box"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/main.js"></script>
+</body>
+</html>

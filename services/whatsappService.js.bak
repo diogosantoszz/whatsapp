@@ -1,0 +1,89 @@
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode');
+
+let client;
+let whatsappConnected = false;
+let qrCodeImage = null;
+
+// Inicializar cliente do WhatsApp
+exports.initWhatsApp = () => {
+  client = new Client({
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+      args: ['--no-sandbox']
+    }
+  });
+
+  client.on('qr', async (qr) => {
+    console.log('QR Code recebido, escaneie para conectar...');
+    whatsappConnected = false;
+    
+    // Gerar imagem do QR code em base64
+    qrCodeImage = await qrcode.toDataURL(qr);
+  });
+
+  client.on('ready', () => {
+    console.log('Cliente WhatsApp está pronto!');
+    whatsappConnected = true;
+    qrCodeImage = null;
+  });
+
+  client.on('authenticated', () => {
+    console.log('Autenticado no WhatsApp');
+  });
+
+  client.on('auth_failure', (msg) => {
+    console.error('Falha na autenticação:', msg);
+    whatsappConnected = false;
+  });
+
+  client.on('disconnected', (reason) => {
+    console.log('Cliente WhatsApp desconectado:', reason);
+    whatsappConnected = false;
+    // Reiniciar cliente após desconexão
+    client.initialize();
+  });
+
+  // Inicializar o cliente
+  client.initialize();
+};
+
+// Enviar mensagem do WhatsApp
+exports.sendWhatsAppMessage = async (to, message) => {
+  if (!client || !whatsappConnected) {
+    throw new Error('Cliente WhatsApp não está conectado');
+  }
+
+  // Formatar número para o formato do WhatsApp
+  const formattedNumber = `${to}@c.us`;
+  
+  try {
+    // Verificar se o número existe no WhatsApp
+    const isRegistered = await client.isRegisteredUser(formattedNumber);
+    if (!isRegistered) {
+      throw new Error(`O número ${to} não está registrado no WhatsApp`);
+    }
+    
+    // Enviar mensagem
+    await client.sendMessage(formattedNumber, message);
+    return true;
+  } catch (error) {
+    console.error('Erro ao enviar mensagem do WhatsApp:', error);
+    throw error;
+  }
+};
+
+// Verificar status da conexão com WhatsApp
+exports.isWhatsAppConnected = () => {
+  return whatsappConnected;
+};
+
+// Obter status da conexão com WhatsApp
+exports.getWhatsAppStatus = () => {
+  return whatsappConnected;
+};
+
+// Obter QR code para conexão
+exports.getQrCode = () => {
+  return qrCodeImage;
+};
